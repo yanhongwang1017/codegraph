@@ -199,7 +199,10 @@ export class Telemetry {
     if (config) {
       return { enabled: config.enabled, decidedBy: 'config', machineId, configPath: this.configPath };
     }
-    return { enabled: true, decidedBy: 'default', machineId, configPath: this.configPath };
+    // Fork default OFF: this build is a private fork — no data leaves the
+    // machine unless the user explicitly opts in (CODEGRAPH_TELEMETRY=1 or
+    // `codegraph telemetry on`, which writes the stored config checked above).
+    return { enabled: false, decidedBy: 'default', machineId, configPath: this.configPath };
   }
 
   isEnabled(): boolean {

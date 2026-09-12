@@ -51,7 +51,6 @@ import { connectWithHello, runLocalHandshakeProxy } from './proxy';
 import { releaseWriterLock, tryAcquireWriterLock, writerLockHeldMessage } from './writer-lock';
 import { getDaemonSocketCandidates, probeDaemonIdentity } from './daemon-paths';
 import { getTelemetry } from '../telemetry';
-import { checkForUpdateInBackground } from '../upgrade/update-check';
 import { EARLY_PPID } from './early-ppid';
 import { supervisionLostReason, parsePpidPollMs, parseHostPpid } from './ppid-watchdog';
 import { installMainThreadWatchdog, WatchdogHandle } from './liveness-watchdog';
@@ -283,9 +282,9 @@ export class MCPServer {
     // running drifts behind releases with no signal. Refresh the shared
     // update-check cache in the background and log ONE stderr notice when a
     // newer version exists (stderr only — stdout is the protocol channel).
-    // The notice also reaches the agent via the initialize instructions and
-    // codegraph_status. Fire-and-forget: adds nothing to the handshake path.
-    checkForUpdateInBackground();
+    // Fork: the background update check is disabled — a private fork must
+    // not phone the release feed or suggest "upgrading" to an upstream
+    // release that lacks the fork's changes.
 
     // The detached daemon process itself. Checked before the opt-out so the
     // daemon honors the same env it was spawned with (it never sets NO_DAEMON).

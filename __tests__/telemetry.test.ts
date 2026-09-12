@@ -34,7 +34,11 @@ describe('Telemetry', () => {
       dir,
       fetchImpl: mockFetch(calls),
       now: () => nowValue,
-      env: {},
+      // FORK: production defaults to DISABLED (private fork — no data leaves
+      // the machine without explicit consent). Tests here exercise the
+      // opted-in behaviors, so the factory forces consent on; the fork's
+      // default-off path is pinned separately in "defaults to disabled".
+      env: { CODEGRAPH_TELEMETRY: '1' },
       stderr: (line) => stderrLines.push(line),
       installExitHook: false,
       ...overrides,
@@ -52,9 +56,9 @@ describe('Telemetry', () => {
   });
 
   describe('consent precedence', () => {
-    it('defaults to enabled when nothing decides otherwise', () => {
-      const t = make();
-      expect(t.getStatus()).toMatchObject({ enabled: true, decidedBy: 'default', machineId: null });
+    it('defaults to disabled on the fork (no data leaves the machine without consent)', () => {
+      const t = make({ env: {} });
+      expect(t.getStatus()).toMatchObject({ enabled: false, decidedBy: 'default', machineId: null });
     });
 
     it('DO_NOT_TRACK beats everything, including a forced-on env and config', () => {
@@ -74,7 +78,7 @@ describe('Telemetry', () => {
     });
 
     it('stored config decides when no env is set', () => {
-      const t = make();
+      const t = make({ env: {} });
       t.setEnabled(false, 'installer');
       expect(t.getStatus()).toMatchObject({ enabled: false, decidedBy: 'config' });
     });
